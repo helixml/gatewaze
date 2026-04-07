@@ -49,3 +49,11 @@ startup.sh
 - The Makefile uses `COMPOSE_PROJECT_NAME` from `.env` to namespace containers
 - `dev.sh` is an alternative entry point but `make` is the canonical interface
 - Multi-brand support exists but is optional — default single-brand mode works out of the box
+
+## Implementation Notes
+
+- **Used `dev.sh` instead of `make`** — the agent environment doesn't have `make` installed, but `dev.sh` performs the same orchestration (env detection, Traefik startup, compose file selection, `docker compose up -d --build`). This makes the script work in more environments.
+- **Replaced `make init` with direct `cp`** — `make init` just copies `docker/.env.example` to `docker/.env`. Since we're not using make, we do the copy directly.
+- **`exec > >(tee -a "$LOG") 2>&1`** — redirects all stdout+stderr to both the terminal and the log file. Uses append mode so repeated runs don't overwrite previous logs.
+- **Tested successfully** — all 16 containers start: admin, portal, api, worker, scheduler, redis, traefik, and 9 supabase services (db, auth, rest, realtime, storage, kong, edge-functions, meta, studio).
+- **First run pulls ~20+ Docker images** and takes several minutes. Subsequent runs are fast (~10s).
